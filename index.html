@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="一个由 Python 标准库后端计算并保存历史记录的前后端分离计算器。"
+    />
+    <title>前后端分离计算器</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">Python 标准库 + SQLite</p>
+          <h1>前后端分离计算器</h1>
+        </div>
+        <span class="backend-status">后端计算</span>
+      </header>
+
+      <main class="workspace">
+        <section class="calculator-panel" aria-labelledby="calculator-title">
+          <h2 id="calculator-title" class="sr-only">表达式计算器</h2>
+
+          <form id="calculator-form" novalidate>
+            <label class="field-label" for="expression">表达式</label>
+            <input
+              id="expression"
+              class="expression-input"
+              name="expression"
+              type="text"
+              inputmode="decimal"
+              autocomplete="off"
+              autocapitalize="off"
+              spellcheck="false"
+              maxlength="200"
+              placeholder="例如 (1+2)*3"
+              aria-describedby="calculator-feedback"
+            />
+
+            <div class="result-row">
+              <span class="result-label">结果</span>
+              <output
+                id="result"
+                class="result-value"
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                —
+              </output>
+            </div>
+
+            <p
+              id="calculator-feedback"
+              class="feedback"
+              role="status"
+              aria-live="polite"
+            ></p>
+
+            <div class="keypad" role="group" aria-label="计算器键盘">
+              <button
+                type="button"
+                class="key key-function"
+                data-action="clear"
+                aria-label="清空表达式"
+              >
+                C
+              </button>
+              <button
+                type="button"
+                class="key"
+                data-action="value"
+                data-value="("
+                aria-label="左括号"
+              >
+                (
+              </button>
+              <button
+                type="button"
+                class="key"
+                data-action="value"
+                data-value=")"
+                aria-label="右括号"
+              >
+                )
+              </button>
+              <button
+                type="button"
+                class="key key-operator"
+                data-action="value"
+                data-value="/"
+                aria-label="除"
+              >
+                ÷
+              </button>
+
+              <button
+                type="button"
+                class="key"
+                data-action="value"
+                data-value="7"
+              >
+                7
+              </button>
+              <button
+                type="button"
+                class="key"
+                data-action="value"
+                data-value="8"
+              >
+                8
+              </button>
+              <button
+                type="button"
+                class="key"
+                data-action="value"
+                data-value="9"
+              >
+                9
+              </button>
+              <button
+                type="button"
+                class="key key-operator"
+                data-action="value"
+                data-value="*"
+                aria-label="乘"
+              >
+                ×
+              </button>
+
+              <button
+                type="button"
+                class="key"
+                data-action="value"
+                data-value="4"
+              >
+                4
+              </button>
+              <button
+                type="button"
+                class="key"
+                data-action="value"
+                data-value="5"
+              >
+                5
+              </button>
+              <button
+                type="button"
+                class="key"
+                data-action="value"
+                data-value="6"
+              >
+                6
+              </button>
+              <button
+                type="button"
+                class="key key-operator"
+                data-action="value"
+                data-value="-"
+                aria-label="减"
+              >
+                −
+              </button>
+
+              <button
+                type="button"
+                class="key"
+                data-action="value"
+                data-value="1"
+              >
+                1
+              </button>
+              <button
+                type="button"
+                class="key"
+                data-action="value"
+                data-value="2"
+              >
+                2
+              </button>
+              <button
+                type="button"
+                class="key"
+                data-action="value"
+                data-value="3"
+              >
+                3
+              </button>
+              <button
+                type="button"
+                class="key key-operator"
+                data-action="value"
+                data-value="+"
+                aria-label="加"
+              >
+                +
+              </button>
+
+              <button
+                type="button"
+                class="key key-function"
+                data-action="backspace"
+                aria-label="退格"
+              >
+                ⌫
+              </button>
+              <button
+                type="button"
+                class="key"
+                data-action="value"
+                data-value="0"
+              >
+                0
+              </button>
+              <button
+                type="button"
+                class="key"
+                data-action="value"
+                data-value="."
+                aria-label="小数点"
+              >
+                .
+              </button>
+              <button type="submit" class="key key-equals" aria-label="计算">
+                =
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section class="history-panel" aria-labelledby="history-title">
+          <header class="history-header">
+            <div>
+              <p class="eyebrow">数据库记录</p>
+              <h2 id="history-title">计算历史</h2>
+            </div>
+            <span id="history-count" class="history-count">0 条</span>
+          </header>
+
+          <p
+            id="history-status"
+            class="history-status"
+            role="status"
+            aria-live="polite"
+          >
+            正在读取历史记录…
+          </p>
+          <ul id="history-list" class="history-list" aria-label="计算历史列表"></ul>
+        </section>
+      </main>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
