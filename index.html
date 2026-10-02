@@ -17,13 +17,54 @@
           <p class="eyebrow">Python 标准库 + SQLite</p>
           <h1>前后端分离计算器</h1>
         </div>
-        <span class="backend-status">后端计算</span>
+        <div class="header-actions">
+          <span class="backend-status">后端计算</span>
+          <button
+            id="theme-toggle"
+            class="theme-toggle"
+            type="button"
+            aria-pressed="false"
+          >
+            深色模式
+          </button>
+        </div>
       </header>
 
       <main class="workspace">
         <section class="calculator-panel" aria-labelledby="calculator-title">
           <h2 id="calculator-title" class="sr-only">表达式计算器</h2>
 
+          <div class="mode-tabs" role="tablist" aria-label="计算模式">
+            <button
+              type="button"
+              class="mode-tab is-active"
+              data-mode="calculator"
+              role="tab"
+              aria-selected="true"
+            >
+              计算
+            </button>
+            <button
+              type="button"
+              class="mode-tab"
+              data-mode="base"
+              role="tab"
+              aria-selected="false"
+            >
+              进制转换
+            </button>
+            <button
+              type="button"
+              class="mode-tab"
+              data-mode="unit"
+              role="tab"
+              aria-selected="false"
+            >
+              单位换算
+            </button>
+          </div>
+
+          <div class="mode-panel" data-mode-panel="calculator">
           <form id="calculator-form" novalidate>
             <label class="field-label" for="expression">表达式</label>
             <input
@@ -228,6 +269,93 @@
               </button>
             </div>
           </form>
+          </div>
+
+          <div class="mode-panel" data-mode-panel="base" hidden>
+            <form id="base-conversion-form" novalidate>
+              <label class="field-label" for="base-value">数值</label>
+              <input
+                id="base-value"
+                class="text-input"
+                type="text"
+                autocomplete="off"
+                maxlength="80"
+                placeholder="例如 255 或 FF"
+              />
+
+              <div class="conversion-grid">
+                <label class="field-stack">
+                  <span class="field-label">原始进制</span>
+                  <select id="from-base" class="select-input">
+                    <option value="2">2 进制</option>
+                    <option value="8">8 进制</option>
+                    <option value="10" selected>10 进制</option>
+                    <option value="16">16 进制</option>
+                    <option value="36">36 进制</option>
+                  </select>
+                </label>
+                <label class="field-stack">
+                  <span class="field-label">目标进制</span>
+                  <select id="to-base" class="select-input">
+                    <option value="2">2 进制</option>
+                    <option value="8">8 进制</option>
+                    <option value="10">10 进制</option>
+                    <option value="16" selected>16 进制</option>
+                    <option value="36">36 进制</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="result-row compact-result">
+                <span class="result-label">转换结果</span>
+                <output id="base-result" class="result-value">-</output>
+              </div>
+              <p id="base-feedback" class="feedback" role="status"></p>
+              <button class="primary-action" type="submit">开始转换</button>
+            </form>
+          </div>
+
+          <div class="mode-panel" data-mode-panel="unit" hidden>
+            <form id="unit-conversion-form" novalidate>
+              <label class="field-label" for="unit-category">换算类别</label>
+              <select id="unit-category" class="select-input">
+                <option value="length">长度</option>
+                <option value="mass">质量</option>
+                <option value="temperature">温度</option>
+                <option value="time">时间</option>
+              </select>
+
+              <label class="field-label" for="unit-value">数值</label>
+              <input
+                id="unit-value"
+                class="text-input"
+                type="text"
+                inputmode="decimal"
+                autocomplete="off"
+                maxlength="80"
+                placeholder="输入数值"
+              />
+
+              <div class="conversion-grid">
+                <label class="field-stack">
+                  <span class="field-label">原单位</span>
+                  <select id="unit-from" class="select-input"></select>
+                </label>
+                <label class="field-stack">
+                  <span class="field-label">目标单位</span>
+                  <select id="unit-to" class="select-input"></select>
+                </label>
+              </div>
+
+              <div class="result-row compact-result">
+                <span class="result-label">换算结果</span>
+                <output id="unit-result" class="result-value">-</output>
+              </div>
+              <p id="unit-feedback" class="feedback" role="status"></p>
+              <button class="primary-action" type="submit">开始换算</button>
+            </form>
+          </div>
+
         </section>
 
         <section class="history-panel" aria-labelledby="history-title">
@@ -239,6 +367,22 @@
             <span id="history-count" class="history-count">0 条</span>
           </header>
 
+          <div class="history-toolbar">
+            <label class="history-search">
+              <span class="sr-only">搜索历史记录</span>
+              <input
+                id="history-search"
+                type="search"
+                autocomplete="off"
+                placeholder="搜索表达式或结果"
+              />
+            </label>
+            <label class="favorite-filter">
+              <input id="favorite-filter" type="checkbox" />
+              <span>只看收藏</span>
+            </label>
+          </div>
+
           <p
             id="history-status"
             class="history-status"
@@ -248,6 +392,11 @@
             正在读取历史记录…
           </p>
           <ul id="history-list" class="history-list" aria-label="计算历史列表"></ul>
+          <div class="history-pagination">
+            <button id="history-prev" type="button">上一页</button>
+            <span id="history-page">第 1 / 1 页</span>
+            <button id="history-next" type="button">下一页</button>
+          </div>
         </section>
       </main>
     </div>

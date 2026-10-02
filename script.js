@@ -8,12 +8,112 @@ const historyList = document.querySelector("#history-list");
 const historyStatus = document.querySelector("#history-status");
 const historyCount = document.querySelector("#history-count");
 const keys = document.querySelectorAll(".key");
+const modeTabs = document.querySelectorAll(".mode-tab");
+const modePanels = document.querySelectorAll(".mode-panel");
+const themeToggle = document.querySelector("#theme-toggle");
+const baseConversionForm = document.querySelector("#base-conversion-form");
+const baseValueInput = document.querySelector("#base-value");
+const fromBaseSelect = document.querySelector("#from-base");
+const toBaseSelect = document.querySelector("#to-base");
+const baseResultElement = document.querySelector("#base-result");
+const baseFeedbackElement = document.querySelector("#base-feedback");
+const unitConversionForm = document.querySelector("#unit-conversion-form");
+const unitCategorySelect = document.querySelector("#unit-category");
+const unitValueInput = document.querySelector("#unit-value");
+const unitFromSelect = document.querySelector("#unit-from");
+const unitToSelect = document.querySelector("#unit-to");
+const unitResultElement = document.querySelector("#unit-result");
+const unitFeedbackElement = document.querySelector("#unit-feedback");
+const historySearchInput = document.querySelector("#history-search");
+const favoriteFilter = document.querySelector("#favorite-filter");
+const historyPrevButton = document.querySelector("#history-prev");
+const historyNextButton = document.querySelector("#history-next");
+const historyPageLabel = document.querySelector("#history-page");
+
+const historyState = {
+  page: 1,
+  pageSize: 10,
+  totalPages: 1,
+  query: "",
+  favoriteOnly: false,
+};
+
+const unitOptions = {
+  length: ["mm", "cm", "m", "km", "in", "ft", "yd", "mi"],
+  mass: ["mg", "g", "kg", "t", "oz", "lb"],
+  temperature: ["c", "f", "k"],
+  time: ["ms", "s", "min", "h", "day"],
+};
 
 class ApiError extends Error {
   constructor(message) {
     super(message);
     this.name = "ApiError";
   }
+}
+
+function applyTheme(theme) {
+  const normalizedTheme = theme === "light" ? "light" : "dark";
+  document.documentElement.dataset.theme = normalizedTheme;
+  themeToggle.textContent = normalizedTheme === "light" ? "深色模式" : "浅色模式";
+  themeToggle.setAttribute(
+    "aria-pressed",
+    normalizedTheme === "light" ? "true" : "false",
+  );
+  localStorage.setItem("calculator-theme", normalizedTheme);
+}
+
+function initializeTheme() {
+  const savedTheme = localStorage.getItem("calculator-theme");
+  const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+  applyTheme(savedTheme ?? (prefersLight ? "light" : "dark"));
+}
+
+function setMode(mode) {
+  modeTabs.forEach((tab) => {
+    const isActive = tab.dataset.mode === mode;
+    tab.classList.toggle("is-active", isActive);
+    tab.setAttribute("aria-selected", String(isActive));
+  });
+  modePanels.forEach((panel) => {
+    panel.hidden = panel.dataset.modePanel !== mode;
+  });
+}
+
+function animateKey(button) {
+  button.classList.remove("is-pressed");
+  void button.offsetWidth;
+  button.classList.add("is-pressed");
+  window.setTimeout(() => button.classList.remove("is-pressed"), 180);
+}
+
+function setOutput(element, value, state = "idle") {
+  element.textContent = value;
+  element.dataset.state = state;
+}
+
+function setElementFeedback(element, message = "", state = "") {
+  element.textContent = message;
+  element.dataset.state = state;
+}
+
+function populateUnitOptions() {
+  const units = unitOptions[unitCategorySelect.value] ?? [];
+  const previousFrom = unitFromSelect.value;
+  const previousTo = unitToSelect.value;
+
+  unitFromSelect.replaceChildren();
+  unitToSelect.replaceChildren();
+
+  units.forEach((unit) => {
+    unitFromSelect.append(new Option(unit, unit));
+    unitToSelect.append(new Option(unit, unit));
+  });
+
+  unitFromSelect.value = units.includes(previousFrom) ? previousFrom : units[0];
+  unitToSelect.value = units.includes(previousTo)
+    ? previousTo
+    : units[Math.min(1, units.length - 1)];
 }
 
 function setResult(value, state = "idle") {
@@ -81,6 +181,20 @@ function createHistoryItem(record) {
   meta.dateTime = record.createdAt;
   meta.textContent = formatDateTime(record.createdAt);
 
+  const favoriteButton = document.createElement("button");
+  favoriteButton.type = "button";
+  favoriteButton.className = record.isFavorite
+    ? "favorite-button is-favorite"
+    : "favorite-button";
+  favoriteButton.textContent = record.isFavorite ? "取消收藏" : "收藏";
+  favoriteButton.setAttribute(
+    "aria-label",
+    `${record.isFavorite ? "取消收藏" : "收藏"} ${record.expression}`,
+  );
+  favoriteButton.addEventListener("click", () => {
+    toggleFavorite(record.id, !record.isFavorite, favoriteButton);
+  });
+
   const deleteButton = document.createElement("button");
   deleteButton.type = "button";
   deleteButton.className = "delete-button";
@@ -93,8 +207,12 @@ function createHistoryItem(record) {
     deleteHistory(record.id, deleteButton);
   });
 
+  const actions = document.createElement("div");
+  actions.className = "history-actions";
+  actions.append(favoriteButton, deleteButton);
+
   main.append(expression, result, meta);
-  listItem.append(main, deleteButton);
+  listItem.append(main, actions);
   return listItem;
 }
 
@@ -110,13 +228,19 @@ function formatDateTime(value) {
   }).format(date);
 }
 
-function renderHistory(records) {
+function renderHistory(records, pagination) {
   historyList.replaceChildren();
-  historyCount.textContent = `${records.length} 条`;
+  historyCount.textContent = `${pagination.total} 条`;
+  historyPageLabel.textContent =
+    `第 ${pagination.page} / ${pagination.totalPages} 页`;
+  historyPrevButton.disabled = pagination.page <= 1;
+  historyNextButton.disabled = pagination.page >= pagination.totalPages;
 
   if (records.length === 0) {
     historyStatus.hidden = false;
-    historyStatus.textContent = "暂无计算历史";
+    historyStatus.textContent = historyState.query || historyState.favoriteOnly
+      ? "没有找到匹配的历史记录"
+      : "暂无计算历史";
     return;
   }
 
@@ -131,11 +255,26 @@ async function loadHistory() {
   historyStatus.textContent = "正在读取历史记录…";
 
   try {
-    const body = await apiRequest("/api/history");
-    renderHistory(body.data);
+    const parameters = new URLSearchParams({
+      page: String(historyState.page),
+      pageSize: String(historyState.pageSize),
+    });
+    if (historyState.query) {
+      parameters.set("q", historyState.query);
+    }
+    if (historyState.favoriteOnly) {
+      parameters.set("favorite", "true");
+    }
+
+    const body = await apiRequest(`/api/history?${parameters.toString()}`);
+    historyState.totalPages = body.pagination.totalPages;
+    renderHistory(body.data, body.pagination);
   } catch (error) {
     historyList.replaceChildren();
     historyCount.textContent = "0 条";
+    historyPageLabel.textContent = "第 1 / 1 页";
+    historyPrevButton.disabled = true;
+    historyNextButton.disabled = true;
     historyStatus.hidden = false;
     historyStatus.textContent =
       error instanceof ApiError ? error.message : "历史记录读取失败";
@@ -242,10 +381,102 @@ function runKeyAction(button) {
   }
 }
 
+async function toggleFavorite(recordId, favorite, button) {
+  button.disabled = true;
+  setFeedback(favorite ? "正在收藏记录…" : "正在取消收藏…");
+
+  try {
+    await apiRequest(`/api/history/${recordId}/favorite`, {
+      method: "PATCH",
+      body: JSON.stringify({ favorite }),
+    });
+    setFeedback(favorite ? "记录已收藏" : "已取消收藏", "success");
+    await loadHistory();
+  } catch (error) {
+    setFeedback(
+      error instanceof ApiError ? error.message : "更新收藏状态失败",
+      "error",
+    );
+    button.disabled = false;
+  }
+}
+
+async function handleBaseConversion(event) {
+  event.preventDefault();
+
+  const value = baseValueInput.value.trim();
+  const submitButton = baseConversionForm.querySelector('[type="submit"]');
+  submitButton.disabled = true;
+  setOutput(baseResultElement, "转换中…", "loading");
+  setElementFeedback(baseFeedbackElement);
+
+  try {
+    const body = await apiRequest("/api/conversions/base", {
+      method: "POST",
+      body: JSON.stringify({
+        value,
+        fromBase: Number(fromBaseSelect.value),
+        toBase: Number(toBaseSelect.value),
+      }),
+    });
+    setOutput(baseResultElement, String(body.data.result), "success");
+    setElementFeedback(baseFeedbackElement, "转换完成，记录已保存", "success");
+    historyState.page = 1;
+    await loadHistory();
+  } catch (error) {
+    setOutput(baseResultElement, "转换失败", "error");
+    setElementFeedback(
+      baseFeedbackElement,
+      error instanceof ApiError ? error.message : "转换失败，请稍后重试",
+      "error",
+    );
+  } finally {
+    submitButton.disabled = false;
+  }
+}
+
+async function handleUnitConversion(event) {
+  event.preventDefault();
+
+  const value = unitValueInput.value.trim();
+  const submitButton = unitConversionForm.querySelector('[type="submit"]');
+  submitButton.disabled = true;
+  setOutput(unitResultElement, "换算中…", "loading");
+  setElementFeedback(unitFeedbackElement);
+
+  try {
+    const body = await apiRequest("/api/conversions/units", {
+      method: "POST",
+      body: JSON.stringify({
+        value,
+        category: unitCategorySelect.value,
+        fromUnit: unitFromSelect.value,
+        toUnit: unitToSelect.value,
+      }),
+    });
+    setOutput(unitResultElement, String(body.data.result), "success");
+    setElementFeedback(unitFeedbackElement, "换算完成，记录已保存", "success");
+    historyState.page = 1;
+    await loadHistory();
+  } catch (error) {
+    setOutput(unitResultElement, "换算失败", "error");
+    setElementFeedback(
+      unitFeedbackElement,
+      error instanceof ApiError ? error.message : "换算失败，请稍后重试",
+      "error",
+    );
+  } finally {
+    submitButton.disabled = false;
+  }
+}
+
 calculatorForm.addEventListener("submit", calculate);
+baseConversionForm.addEventListener("submit", handleBaseConversion);
+unitConversionForm.addEventListener("submit", handleUnitConversion);
 
 keys.forEach((button) => {
   button.addEventListener("click", () => {
+    animateKey(button);
     if (button.type !== "submit") {
       runKeyAction(button);
     }
@@ -261,4 +492,51 @@ expressionInput.addEventListener("keydown", (event) => {
   }
 });
 
+modeTabs.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    setMode(tab.dataset.mode);
+  });
+});
+
+themeToggle.addEventListener("click", () => {
+  const nextTheme =
+    document.documentElement.dataset.theme === "light" ? "dark" : "light";
+  applyTheme(nextTheme);
+});
+
+unitCategorySelect.addEventListener("change", populateUnitOptions);
+
+let searchTimer;
+historySearchInput.addEventListener("input", () => {
+  window.clearTimeout(searchTimer);
+  searchTimer = window.setTimeout(() => {
+    historyState.query = historySearchInput.value.trim();
+    historyState.page = 1;
+    loadHistory();
+  }, 250);
+});
+
+favoriteFilter.addEventListener("change", () => {
+  historyState.favoriteOnly = favoriteFilter.checked;
+  historyState.page = 1;
+  loadHistory();
+});
+
+historyPrevButton.addEventListener("click", () => {
+  if (historyState.page > 1) {
+    historyState.page -= 1;
+    loadHistory();
+  }
+});
+
+historyNextButton.addEventListener("click", () => {
+  if (historyState.page < historyState.totalPages) {
+    historyState.page += 1;
+    loadHistory();
+  }
+});
+
+initializeTheme();
+setMode("calculator");
+populateUnitOptions();
 loadHistory();

@@ -1,43 +1,66 @@
-# 前后端分离计算器前端
+# Front-End and Back-End Separation Calculator Front End
 
-## 项目介绍
+## Project Overview
 
-原生 HTML/CSS/JavaScript 计算器前端。用户可以通过键盘或按钮输入复合表达式，
-点击等号后由 Python 标准库后端完成计算。结果和历史记录均来自后端接口，前端不会执行表达式。
+This repository contains a native HTML, CSS, and JavaScript calculator client.
+The front end collects user input, sends HTTP JSON requests, and renders results
+from the backend. It does not evaluate expressions locally.
 
-## 技术栈
+## Technology Stack
 
 - HTML5
-- CSS Grid / Flexbox
-- 原生 JavaScript Fetch API
-- 无框架、无构建步骤
+- CSS Grid and Flexbox
+- Native JavaScript Fetch API
+- No framework and no build step
 
-## 运行环境
+## Features
 
-- 现代 Chromium、Firefox 或 Safari 浏览器
-- 可选的 Python 3，用于启动本地静态文件服务
-- 已启动的后端服务
+- Arithmetic expression input and keypad
+- Base conversion
+- Unit conversion
+- History search and pagination
+- Favorite history records
+- Light and dark themes
+- Key press feedback animation
+- Responsive desktop and mobile layout
 
-## 安装方法
+## Runtime Environment
 
-本项目只使用原生 HTML、CSS 和 JavaScript，没有第三方依赖，不需要执行
-`npm install`，也没有构建步骤。下载或克隆本仓库后即可启动。
+- A modern Chromium, Firefox, or Safari browser
+- Python 3 optional for serving static files locally
+- A running backend API
 
-## 启动方法
+## Installation
 
-先在后端仓库执行 `python -m app.server` 启动 API，然后在本目录执行：
+There are no third-party dependencies and no `npm install` step. Clone or
+download this repository and start a static file server.
+
+## Startup
+
+Start the backend first:
+
+```powershell
+python -m app.server
+```
+
+Then start this front end from this repository directory:
 
 ```powershell
 python -m http.server 5500
 ```
 
-浏览器访问 `http://127.0.0.1:5500`。
+Open:
 
-不要直接双击 `index.html`。使用 `file://` 打开时浏览器可能拦截跨域请求。
+```text
+http://127.0.0.1:5500
+```
 
-## 配置
+Do not open `index.html` directly through `file://`, because browser security
+rules may block API requests.
 
-`config.js` 保存后端地址：
+## Configuration
+
+`config.js` stores the backend base URL:
 
 ```javascript
 window.APP_CONFIG = {
@@ -45,24 +68,40 @@ window.APP_CONFIG = {
 };
 ```
 
-部署到 GitHub Pages 后，把地址替换成 Render Web Service 地址，不要以 `/` 结尾。
+For an ECS deployment where Nginx serves both the front end and `/api/`, use
+an empty string:
 
-## 前后端连接
+```javascript
+window.APP_CONFIG = {
+  API_BASE_URL: "",
+};
+```
 
-- `POST /api/calculations`：提交表达式并接收后端结果。
-- `GET /api/history`：每次进入页面、计算成功或删除成功后读取数据库历史。
-- `DELETE /api/history/{id}`：删除指定记录。
+Do not append a trailing slash.
 
-如果后端停止，页面仍可输入表达式，但等号不会产生新的有效结果，并会显示连接错误。
+## Front-End and Back-End Connection
 
-## 数据库初始化
+- `POST /api/calculations` evaluates an expression.
+- `POST /api/conversions/base` converts a number base.
+- `POST /api/conversions/units` converts a unit value.
+- `GET /api/history` loads history with search and pagination.
+- `PATCH /api/history/{id}/favorite` updates a favorite record.
+- `DELETE /api/history/{id}` deletes a record.
 
-前端不创建或修改数据库。后端首次启动时会自动初始化 `calculation_history` 表，
-前端只通过上述 API 读取和删除后端数据库中的历史记录。
+If the backend is unavailable, the interface remains usable, but new
+calculations cannot produce valid results.
 
-## GitHub Pages 部署
+## Database Initialization
 
-1. 将本仓库推送到独立 GitHub 仓库。
-2. 在仓库 Settings → Pages 中选择从分支部署。
-3. 确认 `config.js` 已指向公网后端地址。
-4. 把 `https://用户名.github.io` 加入后端 `ALLOWED_ORIGINS`。
+The front end does not create or modify the database. The backend initializes
+the SQLite table. The front end only reads and updates history through the API.
+
+## Browser Testing
+
+- Verify arithmetic, parentheses, unary signs, and decimals.
+- Verify invalid expressions and division by zero.
+- Verify base and unit conversion.
+- Verify history search, pagination, and favorites.
+- Verify theme switching and key animation.
+- Verify history remains after a page refresh.
+- Verify the layout at a 390 x 844 mobile viewport.
