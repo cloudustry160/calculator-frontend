@@ -16,10 +16,8 @@ from the backend. It does not evaluate expressions locally.
 ## Features
 
 - Arithmetic expression input and keypad
-- Base conversion
-- Unit conversion
+- Base conversion for bases 2, 8, 10, and 16
 - History search and pagination
-- Favorite history records
 - Light and dark themes
 - Key press feedback animation
 - Responsive desktop and mobile layout
@@ -83,9 +81,7 @@ Do not append a trailing slash.
 
 - `POST /api/calculations` evaluates an expression.
 - `POST /api/conversions/base` converts a number base.
-- `POST /api/conversions/units` converts a unit value.
 - `GET /api/history` loads history with search and pagination.
-- `PATCH /api/history/{id}/favorite` updates a favorite record.
 - `DELETE /api/history/{id}` deletes a record.
 
 If the backend is unavailable, the interface remains usable, but new
@@ -100,8 +96,8 @@ the SQLite table. The front end only reads and updates history through the API.
 
 - Verify arithmetic, parentheses, unary signs, and decimals.
 - Verify invalid expressions and division by zero.
-- Verify base and unit conversion.
-- Verify history search, pagination, and favorites.
+- Verify base conversion.
+- Verify history search with the search button and 10 records per page.
 - Verify theme switching and key animation.
 - Verify history remains after a page refresh.
 - Verify the layout at a 390 x 844 mobile viewport.

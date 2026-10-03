@@ -537,6 +537,7 @@ html[data-theme="light"] .expression-input::placeholder {
 .theme-toggle,
 .mode-tab,
 .primary-action,
+.history-search-button,
 .history-pagination button {
   border: 1px solid var(--line-strong);
   border-radius: 6px;
@@ -556,6 +557,18 @@ html[data-theme="light"] .expression-input::placeholder {
   padding: 0 12px;
 }
 
+.history-search-button {
+  min-width: 74px;
+  min-height: 46px;
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.history-search-button:hover {
+  background: var(--accent-hover);
+}
+
 .theme-toggle:hover,
 .history-pagination button:hover:not(:disabled) {
   border-color: var(--focus);
@@ -563,7 +576,7 @@ html[data-theme="light"] .expression-input::placeholder {
 
 .mode-tabs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
   margin-bottom: 16px;
   padding: 4px;
@@ -672,52 +685,6 @@ html[data-theme="light"] .expression-input::placeholder {
   min-width: 0;
 }
 
-.favorite-filter {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 0 4px;
-  color: var(--muted);
-  font-size: 0.8rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.favorite-filter input {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--accent);
-}
-
-.history-actions {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-
-.favorite-button {
-  min-width: 58px;
-  min-height: 36px;
-  padding: 0 9px;
-  border: 1px solid rgba(242, 177, 92, 0.34);
-  border-radius: 5px;
-  background: rgba(242, 177, 92, 0.08);
-  color: var(--accent);
-  cursor: pointer;
-  font-size: 0.76rem;
-  font-weight: 700;
-}
-
-.favorite-button.is-favorite {
-  background: var(--accent);
-  color: var(--accent-ink);
-}
-
-.favorite-button:disabled {
-  cursor: wait;
-  opacity: 0.5;
-}
-
 .history-pagination {
   display: flex;
   align-items: center;
@@ -772,10 +739,6 @@ html[data-theme="light"] .expression-input::placeholder {
     justify-content: space-between;
   }
 
-  .history-actions {
-    align-items: stretch;
-    flex-direction: column;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

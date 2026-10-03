@@ -53,15 +53,6 @@
             >
               进制转换
             </button>
-            <button
-              type="button"
-              class="mode-tab"
-              data-mode="unit"
-              role="tab"
-              aria-selected="false"
-            >
-              单位换算
-            </button>
           </div>
 
           <div class="mode-panel" data-mode-panel="calculator">
@@ -291,7 +282,6 @@
                     <option value="8">8 进制</option>
                     <option value="10" selected>10 进制</option>
                     <option value="16">16 进制</option>
-                    <option value="36">36 进制</option>
                   </select>
                 </label>
                 <label class="field-stack">
@@ -301,7 +291,6 @@
                     <option value="8">8 进制</option>
                     <option value="10">10 进制</option>
                     <option value="16" selected>16 进制</option>
-                    <option value="36">36 进制</option>
                   </select>
                 </label>
               </div>
@@ -312,47 +301,6 @@
               </div>
               <p id="base-feedback" class="feedback" role="status"></p>
               <button class="primary-action" type="submit">开始转换</button>
-            </form>
-          </div>
-
-          <div class="mode-panel" data-mode-panel="unit" hidden>
-            <form id="unit-conversion-form" novalidate>
-              <label class="field-label" for="unit-category">换算类别</label>
-              <select id="unit-category" class="select-input">
-                <option value="length">长度</option>
-                <option value="mass">质量</option>
-                <option value="temperature">温度</option>
-                <option value="time">时间</option>
-              </select>
-
-              <label class="field-label" for="unit-value">数值</label>
-              <input
-                id="unit-value"
-                class="text-input"
-                type="text"
-                inputmode="decimal"
-                autocomplete="off"
-                maxlength="80"
-                placeholder="输入数值"
-              />
-
-              <div class="conversion-grid">
-                <label class="field-stack">
-                  <span class="field-label">原单位</span>
-                  <select id="unit-from" class="select-input"></select>
-                </label>
-                <label class="field-stack">
-                  <span class="field-label">目标单位</span>
-                  <select id="unit-to" class="select-input"></select>
-                </label>
-              </div>
-
-              <div class="result-row compact-result">
-                <span class="result-label">换算结果</span>
-                <output id="unit-result" class="result-value">-</output>
-              </div>
-              <p id="unit-feedback" class="feedback" role="status"></p>
-              <button class="primary-action" type="submit">开始换算</button>
             </form>
           </div>
 
@@ -367,21 +315,18 @@
             <span id="history-count" class="history-count">0 条</span>
           </header>
 
-          <div class="history-toolbar">
+          <form id="history-search-form" class="history-toolbar" novalidate>
             <label class="history-search">
               <span class="sr-only">搜索历史记录</span>
               <input
                 id="history-search"
                 type="search"
                 autocomplete="off"
-                placeholder="搜索表达式或结果"
+                placeholder="输入表达式或结果"
               />
             </label>
-            <label class="favorite-filter">
-              <input id="favorite-filter" type="checkbox" />
-              <span>只看收藏</span>
-            </label>
-          </div>
+            <button class="history-search-button" type="submit">搜索</button>
+          </form>
 
           <p
             id="history-status"

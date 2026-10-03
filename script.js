@@ -1,4 +1,5 @@
 const API_BASE_URL = (window.APP_CONFIG?.API_BASE_URL ?? "").replace(/\/+$/, "");
+const PAGE_SIZE = 10;
 
 const calculatorForm = document.querySelector("#calculator-form");
 const expressionInput = document.querySelector("#expression");
@@ -17,32 +18,16 @@ const fromBaseSelect = document.querySelector("#from-base");
 const toBaseSelect = document.querySelector("#to-base");
 const baseResultElement = document.querySelector("#base-result");
 const baseFeedbackElement = document.querySelector("#base-feedback");
-const unitConversionForm = document.querySelector("#unit-conversion-form");
-const unitCategorySelect = document.querySelector("#unit-category");
-const unitValueInput = document.querySelector("#unit-value");
-const unitFromSelect = document.querySelector("#unit-from");
-const unitToSelect = document.querySelector("#unit-to");
-const unitResultElement = document.querySelector("#unit-result");
-const unitFeedbackElement = document.querySelector("#unit-feedback");
+const historySearchForm = document.querySelector("#history-search-form");
 const historySearchInput = document.querySelector("#history-search");
-const favoriteFilter = document.querySelector("#favorite-filter");
 const historyPrevButton = document.querySelector("#history-prev");
 const historyNextButton = document.querySelector("#history-next");
 const historyPageLabel = document.querySelector("#history-page");
 
 const historyState = {
   page: 1,
-  pageSize: 10,
   totalPages: 1,
   query: "",
-  favoriteOnly: false,
-};
-
-const unitOptions = {
-  length: ["mm", "cm", "m", "km", "in", "ft", "yd", "mi"],
-  mass: ["mg", "g", "kg", "t", "oz", "lb"],
-  temperature: ["c", "f", "k"],
-  time: ["ms", "s", "min", "h", "day"],
 };
 
 class ApiError extends Error {
@@ -65,8 +50,7 @@ function applyTheme(theme) {
 
 function initializeTheme() {
   const savedTheme = localStorage.getItem("calculator-theme");
-  const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
-  applyTheme(savedTheme ?? (prefersLight ? "light" : "dark"));
+  applyTheme(savedTheme ?? "dark");
 }
 
 function setMode(mode) {
@@ -97,33 +81,12 @@ function setElementFeedback(element, message = "", state = "") {
   element.dataset.state = state;
 }
 
-function populateUnitOptions() {
-  const units = unitOptions[unitCategorySelect.value] ?? [];
-  const previousFrom = unitFromSelect.value;
-  const previousTo = unitToSelect.value;
-
-  unitFromSelect.replaceChildren();
-  unitToSelect.replaceChildren();
-
-  units.forEach((unit) => {
-    unitFromSelect.append(new Option(unit, unit));
-    unitToSelect.append(new Option(unit, unit));
-  });
-
-  unitFromSelect.value = units.includes(previousFrom) ? previousFrom : units[0];
-  unitToSelect.value = units.includes(previousTo)
-    ? previousTo
-    : units[Math.min(1, units.length - 1)];
-}
-
 function setResult(value, state = "idle") {
-  resultElement.textContent = value;
-  resultElement.dataset.state = state;
+  setOutput(resultElement, value, state);
 }
 
 function setFeedback(message = "", state = "") {
-  feedbackElement.textContent = message;
-  feedbackElement.dataset.state = state;
+  setElementFeedback(feedbackElement, message, state);
 }
 
 async function apiRequest(path, options = {}) {
@@ -161,6 +124,18 @@ async function apiRequest(path, options = {}) {
   return body;
 }
 
+function formatDateTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("zh-CN", {
+    dateStyle: "medium",
+    timeStyle: "medium",
+  }).format(date);
+}
+
 function createHistoryItem(record) {
   const listItem = document.createElement("li");
   listItem.className = "history-item";
@@ -181,20 +156,6 @@ function createHistoryItem(record) {
   meta.dateTime = record.createdAt;
   meta.textContent = formatDateTime(record.createdAt);
 
-  const favoriteButton = document.createElement("button");
-  favoriteButton.type = "button";
-  favoriteButton.className = record.isFavorite
-    ? "favorite-button is-favorite"
-    : "favorite-button";
-  favoriteButton.textContent = record.isFavorite ? "取消收藏" : "收藏";
-  favoriteButton.setAttribute(
-    "aria-label",
-    `${record.isFavorite ? "取消收藏" : "收藏"} ${record.expression}`,
-  );
-  favoriteButton.addEventListener("click", () => {
-    toggleFavorite(record.id, !record.isFavorite, favoriteButton);
-  });
-
   const deleteButton = document.createElement("button");
   deleteButton.type = "button";
   deleteButton.className = "delete-button";
@@ -207,25 +168,9 @@ function createHistoryItem(record) {
     deleteHistory(record.id, deleteButton);
   });
 
-  const actions = document.createElement("div");
-  actions.className = "history-actions";
-  actions.append(favoriteButton, deleteButton);
-
   main.append(expression, result, meta);
-  listItem.append(main, actions);
+  listItem.append(main, deleteButton);
   return listItem;
-}
-
-function formatDateTime(value) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat("zh-CN", {
-    dateStyle: "medium",
-    timeStyle: "medium",
-  }).format(date);
 }
 
 function renderHistory(records, pagination) {
@@ -238,7 +183,7 @@ function renderHistory(records, pagination) {
 
   if (records.length === 0) {
     historyStatus.hidden = false;
-    historyStatus.textContent = historyState.query || historyState.favoriteOnly
+    historyStatus.textContent = historyState.query
       ? "没有找到匹配的历史记录"
       : "暂无计算历史";
     return;
@@ -257,13 +202,10 @@ async function loadHistory() {
   try {
     const parameters = new URLSearchParams({
       page: String(historyState.page),
-      pageSize: String(historyState.pageSize),
+      pageSize: String(PAGE_SIZE),
     });
     if (historyState.query) {
       parameters.set("q", historyState.query);
-    }
-    if (historyState.favoriteOnly) {
-      parameters.set("favorite", "true");
     }
 
     const body = await apiRequest(`/api/history?${parameters.toString()}`);
@@ -288,6 +230,9 @@ async function deleteHistory(recordId, button) {
   try {
     await apiRequest(`/api/history/${recordId}`, { method: "DELETE" });
     setFeedback("历史记录已删除", "success");
+    if (historyList.children.length === 1 && historyState.page > 1) {
+      historyState.page -= 1;
+    }
     await loadHistory();
   } catch (error) {
     setFeedback(
@@ -322,6 +267,7 @@ async function calculate(event) {
 
     setResult(String(body.data.result), "success");
     setFeedback("计算完成，记录已保存", "success");
+    historyState.page = 1;
     await loadHistory();
   } catch (error) {
     setResult("计算失败", "error");
@@ -381,26 +327,6 @@ function runKeyAction(button) {
   }
 }
 
-async function toggleFavorite(recordId, favorite, button) {
-  button.disabled = true;
-  setFeedback(favorite ? "正在收藏记录…" : "正在取消收藏…");
-
-  try {
-    await apiRequest(`/api/history/${recordId}/favorite`, {
-      method: "PATCH",
-      body: JSON.stringify({ favorite }),
-    });
-    setFeedback(favorite ? "记录已收藏" : "已取消收藏", "success");
-    await loadHistory();
-  } catch (error) {
-    setFeedback(
-      error instanceof ApiError ? error.message : "更新收藏状态失败",
-      "error",
-    );
-    button.disabled = false;
-  }
-}
-
 async function handleBaseConversion(event) {
   event.preventDefault();
 
@@ -435,44 +361,8 @@ async function handleBaseConversion(event) {
   }
 }
 
-async function handleUnitConversion(event) {
-  event.preventDefault();
-
-  const value = unitValueInput.value.trim();
-  const submitButton = unitConversionForm.querySelector('[type="submit"]');
-  submitButton.disabled = true;
-  setOutput(unitResultElement, "换算中…", "loading");
-  setElementFeedback(unitFeedbackElement);
-
-  try {
-    const body = await apiRequest("/api/conversions/units", {
-      method: "POST",
-      body: JSON.stringify({
-        value,
-        category: unitCategorySelect.value,
-        fromUnit: unitFromSelect.value,
-        toUnit: unitToSelect.value,
-      }),
-    });
-    setOutput(unitResultElement, String(body.data.result), "success");
-    setElementFeedback(unitFeedbackElement, "换算完成，记录已保存", "success");
-    historyState.page = 1;
-    await loadHistory();
-  } catch (error) {
-    setOutput(unitResultElement, "换算失败", "error");
-    setElementFeedback(
-      unitFeedbackElement,
-      error instanceof ApiError ? error.message : "换算失败，请稍后重试",
-      "error",
-    );
-  } finally {
-    submitButton.disabled = false;
-  }
-}
-
 calculatorForm.addEventListener("submit", calculate);
 baseConversionForm.addEventListener("submit", handleBaseConversion);
-unitConversionForm.addEventListener("submit", handleUnitConversion);
 
 keys.forEach((button) => {
   button.addEventListener("click", () => {
@@ -504,20 +394,9 @@ themeToggle.addEventListener("click", () => {
   applyTheme(nextTheme);
 });
 
-unitCategorySelect.addEventListener("change", populateUnitOptions);
-
-let searchTimer;
-historySearchInput.addEventListener("input", () => {
-  window.clearTimeout(searchTimer);
-  searchTimer = window.setTimeout(() => {
-    historyState.query = historySearchInput.value.trim();
-    historyState.page = 1;
-    loadHistory();
-  }, 250);
-});
-
-favoriteFilter.addEventListener("change", () => {
-  historyState.favoriteOnly = favoriteFilter.checked;
+historySearchForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  historyState.query = historySearchInput.value.trim();
   historyState.page = 1;
   loadHistory();
 });
@@ -538,5 +417,4 @@ historyNextButton.addEventListener("click", () => {
 
 initializeTheme();
 setMode("calculator");
-populateUnitOptions();
 loadHistory();
