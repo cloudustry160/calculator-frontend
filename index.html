@@ -1,40 +1,40 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="一个由 Python 标准库后端计算并保存历史记录的前后端分离计算器。"
+      content="A front-end and back-end separated calculator powered by a Python standard-library API and SQLite."
     />
-    <title>前后端分离计算器</title>
+    <title>Calculator System</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="page-shell">
       <header class="page-header">
         <div>
-          <p class="eyebrow">Python 标准库 + SQLite</p>
-          <h1>前后端分离计算器</h1>
+          <p class="eyebrow">Python Standard Library + SQLite</p>
+          <h1>Calculator System</h1>
         </div>
         <div class="header-actions">
-          <span class="backend-status">后端计算</span>
+          <span class="backend-status">Backend calculation</span>
           <button
             id="theme-toggle"
             class="theme-toggle"
             type="button"
             aria-pressed="false"
           >
-            深色模式
+            Light mode
           </button>
         </div>
       </header>
 
       <main class="workspace">
         <section class="calculator-panel" aria-labelledby="calculator-title">
-          <h2 id="calculator-title" class="sr-only">表达式计算器</h2>
+          <h2 id="calculator-title" class="sr-only">Expression calculator</h2>
 
-          <div class="mode-tabs" role="tablist" aria-label="计算模式">
+          <div class="mode-tabs" role="tablist" aria-label="Calculation mode">
             <button
               type="button"
               class="mode-tab is-active"
@@ -42,7 +42,7 @@
               role="tab"
               aria-selected="true"
             >
-              计算
+              Calculate
             </button>
             <button
               type="button"
@@ -51,13 +51,13 @@
               role="tab"
               aria-selected="false"
             >
-              进制转换
+              Base conversion
             </button>
           </div>
 
           <div class="mode-panel" data-mode-panel="calculator">
           <form id="calculator-form" novalidate>
-            <label class="field-label" for="expression">表达式</label>
+            <label class="field-label" for="expression">Expression</label>
             <input
               id="expression"
               class="expression-input"
@@ -68,12 +68,12 @@
               autocapitalize="off"
               spellcheck="false"
               maxlength="200"
-              placeholder="例如 (1+2)*3"
+              placeholder="Example: (1+2)*3"
               aria-describedby="calculator-feedback"
             />
 
             <div class="result-row">
-              <span class="result-label">结果</span>
+              <span class="result-label">Result</span>
               <output
                 id="result"
                 class="result-value"
@@ -91,12 +91,12 @@
               aria-live="polite"
             ></p>
 
-            <div class="keypad" role="group" aria-label="计算器键盘">
+            <div class="keypad" role="group" aria-label="Calculator keypad">
               <button
                 type="button"
                 class="key key-function"
                 data-action="clear"
-                aria-label="清空表达式"
+                aria-label="Clear expression"
               >
                 C
               </button>
@@ -105,7 +105,7 @@
                 class="key"
                 data-action="value"
                 data-value="("
-                aria-label="左括号"
+                aria-label="Left parenthesis"
               >
                 (
               </button>
@@ -114,7 +114,7 @@
                 class="key"
                 data-action="value"
                 data-value=")"
-                aria-label="右括号"
+                aria-label="Right parenthesis"
               >
                 )
               </button>
@@ -123,7 +123,7 @@
                 class="key key-operator"
                 data-action="value"
                 data-value="/"
-                aria-label="除"
+                aria-label="Divide"
               >
                 ÷
               </button>
@@ -157,7 +157,7 @@
                 class="key key-operator"
                 data-action="value"
                 data-value="*"
-                aria-label="乘"
+                aria-label="Multiply"
               >
                 ×
               </button>
@@ -191,7 +191,7 @@
                 class="key key-operator"
                 data-action="value"
                 data-value="-"
-                aria-label="减"
+                aria-label="Subtract"
               >
                 −
               </button>
@@ -225,7 +225,7 @@
                 class="key key-operator"
                 data-action="value"
                 data-value="+"
-                aria-label="加"
+                aria-label="Add"
               >
                 +
               </button>
@@ -234,7 +234,7 @@
                 type="button"
                 class="key key-function"
                 data-action="backspace"
-                aria-label="退格"
+                aria-label="Backspace"
               >
                 ⌫
               </button>
@@ -251,11 +251,11 @@
                 class="key"
                 data-action="value"
                 data-value="."
-                aria-label="小数点"
+                aria-label="Decimal point"
               >
                 .
               </button>
-              <button type="submit" class="key key-equals" aria-label="计算">
+              <button type="submit" class="key key-equals" aria-label="Calculate">
                 =
               </button>
             </div>
@@ -264,43 +264,43 @@
 
           <div class="mode-panel" data-mode-panel="base" hidden>
             <form id="base-conversion-form" novalidate>
-              <label class="field-label" for="base-value">数值</label>
+              <label class="field-label" for="base-value">Value</label>
               <input
                 id="base-value"
                 class="text-input"
                 type="text"
                 autocomplete="off"
                 maxlength="80"
-                placeholder="例如 255 或 FF"
+                placeholder="Example: 255 or FF"
               />
 
               <div class="conversion-grid">
                 <label class="field-stack">
-                  <span class="field-label">原始进制</span>
+                  <span class="field-label">From base</span>
                   <select id="from-base" class="select-input">
-                    <option value="2">2 进制</option>
-                    <option value="8">8 进制</option>
-                    <option value="10" selected>10 进制</option>
-                    <option value="16">16 进制</option>
+                    <option value="2">Base 2</option>
+                    <option value="8">Base 8</option>
+                    <option value="10" selected>Base 10</option>
+                    <option value="16">Base 16</option>
                   </select>
                 </label>
                 <label class="field-stack">
-                  <span class="field-label">目标进制</span>
+                  <span class="field-label">To base</span>
                   <select id="to-base" class="select-input">
-                    <option value="2">2 进制</option>
-                    <option value="8">8 进制</option>
-                    <option value="10">10 进制</option>
-                    <option value="16" selected>16 进制</option>
+                    <option value="2">Base 2</option>
+                    <option value="8">Base 8</option>
+                    <option value="10">Base 10</option>
+                    <option value="16" selected>Base 16</option>
                   </select>
                 </label>
               </div>
 
               <div class="result-row compact-result">
-                <span class="result-label">转换结果</span>
+                <span class="result-label">Converted result</span>
                 <output id="base-result" class="result-value">-</output>
               </div>
               <p id="base-feedback" class="feedback" role="status"></p>
-              <button class="primary-action" type="submit">开始转换</button>
+              <button class="primary-action" type="submit">Convert</button>
             </form>
           </div>
 
@@ -309,23 +309,23 @@
         <section class="history-panel" aria-labelledby="history-title">
           <header class="history-header">
             <div>
-              <p class="eyebrow">数据库记录</p>
-              <h2 id="history-title">计算历史</h2>
+              <p class="eyebrow">Database records</p>
+              <h2 id="history-title">History</h2>
             </div>
-            <span id="history-count" class="history-count">0 条</span>
+            <span id="history-count" class="history-count">0 items</span>
           </header>
 
           <form id="history-search-form" class="history-toolbar" novalidate>
             <label class="history-search">
-              <span class="sr-only">搜索历史记录</span>
+              <span class="sr-only">Search history</span>
               <input
                 id="history-search"
                 type="search"
                 autocomplete="off"
-                placeholder="输入表达式或结果"
+                placeholder="Enter an expression or result"
               />
             </label>
-            <button class="history-search-button" type="submit">搜索</button>
+            <button class="history-search-button" type="submit">Search</button>
           </form>
 
           <p
@@ -334,13 +334,13 @@
             role="status"
             aria-live="polite"
           >
-            正在读取历史记录…
+            Loading history…
           </p>
-          <ul id="history-list" class="history-list" aria-label="计算历史列表"></ul>
+          <ul id="history-list" class="history-list" aria-label="Calculation history"></ul>
           <div class="history-pagination">
-            <button id="history-prev" type="button">上一页</button>
-            <span id="history-page">第 1 / 1 页</span>
-            <button id="history-next" type="button">下一页</button>
+            <button id="history-prev" type="button">Previous</button>
+            <span id="history-page">Page 1 / 1</span>
+            <button id="history-next" type="button">Next</button>
           </div>
         </section>
       </main>

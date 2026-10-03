@@ -40,7 +40,7 @@ class ApiError extends Error {
 function applyTheme(theme) {
   const normalizedTheme = theme === "light" ? "light" : "dark";
   document.documentElement.dataset.theme = normalizedTheme;
-  themeToggle.textContent = normalizedTheme === "light" ? "深色模式" : "浅色模式";
+  themeToggle.textContent = normalizedTheme === "light" ? "Dark mode" : "Light mode";
   themeToggle.setAttribute(
     "aria-pressed",
     normalizedTheme === "light" ? "true" : "false",
@@ -101,7 +101,7 @@ async function apiRequest(path, options = {}) {
       },
     });
   } catch {
-    throw new ApiError("无法连接后端，请确认服务已经启动");
+    throw new ApiError("Unable to connect to the backend. Check the service.");
   }
 
   if (response.status === 204) {
@@ -113,12 +113,12 @@ async function apiRequest(path, options = {}) {
     body = await response.json();
   } catch {
     if (!response.ok) {
-      throw new ApiError(`后端返回异常状态：${response.status}`);
+      throw new ApiError(`Unexpected backend status: ${response.status}`);
     }
   }
 
   if (!response.ok) {
-    throw new ApiError(body?.message ?? `请求失败：${response.status}`);
+    throw new ApiError(body?.message ?? `Request failed: ${response.status}`);
   }
 
   return body;
@@ -159,10 +159,10 @@ function createHistoryItem(record) {
   const deleteButton = document.createElement("button");
   deleteButton.type = "button";
   deleteButton.className = "delete-button";
-  deleteButton.textContent = "删除";
+  deleteButton.textContent = "Delete";
   deleteButton.setAttribute(
     "aria-label",
-    `删除计算记录：${record.expression} = ${record.result}`,
+    `Delete record: ${record.expression} = ${record.result}`,
   );
   deleteButton.addEventListener("click", () => {
     deleteHistory(record.id, deleteButton);
@@ -175,17 +175,17 @@ function createHistoryItem(record) {
 
 function renderHistory(records, pagination) {
   historyList.replaceChildren();
-  historyCount.textContent = `${pagination.total} 条`;
+  historyCount.textContent = `${pagination.total} items`;
   historyPageLabel.textContent =
-    `第 ${pagination.page} / ${pagination.totalPages} 页`;
+    `Page ${pagination.page} / ${pagination.totalPages}`;
   historyPrevButton.disabled = pagination.page <= 1;
   historyNextButton.disabled = pagination.page >= pagination.totalPages;
 
   if (records.length === 0) {
     historyStatus.hidden = false;
     historyStatus.textContent = historyState.query
-      ? "没有找到匹配的历史记录"
-      : "暂无计算历史";
+      ? "No matching history records"
+      : "No calculation history";
     return;
   }
 
@@ -197,7 +197,7 @@ function renderHistory(records, pagination) {
 
 async function loadHistory() {
   historyStatus.hidden = false;
-  historyStatus.textContent = "正在读取历史记录…";
+  historyStatus.textContent = "Loading history…";
 
   try {
     const parameters = new URLSearchParams({
@@ -213,30 +213,30 @@ async function loadHistory() {
     renderHistory(body.data, body.pagination);
   } catch (error) {
     historyList.replaceChildren();
-    historyCount.textContent = "0 条";
-    historyPageLabel.textContent = "第 1 / 1 页";
+    historyCount.textContent = "0 items";
+    historyPageLabel.textContent = "Page 1 / 1";
     historyPrevButton.disabled = true;
     historyNextButton.disabled = true;
     historyStatus.hidden = false;
     historyStatus.textContent =
-      error instanceof ApiError ? error.message : "历史记录读取失败";
+      error instanceof ApiError ? error.message : "Failed to load history";
   }
 }
 
 async function deleteHistory(recordId, button) {
   button.disabled = true;
-  setFeedback("正在删除历史记录…");
+  setFeedback("Deleting history record…");
 
   try {
     await apiRequest(`/api/history/${recordId}`, { method: "DELETE" });
-    setFeedback("历史记录已删除", "success");
+    setFeedback("History record deleted", "success");
     if (historyList.children.length === 1 && historyState.page > 1) {
       historyState.page -= 1;
     }
     await loadHistory();
   } catch (error) {
     setFeedback(
-      error instanceof ApiError ? error.message : "删除失败，请稍后重试",
+      error instanceof ApiError ? error.message : "Delete failed. Try again.",
       "error",
     );
     button.disabled = false;
@@ -248,7 +248,7 @@ async function calculate(event) {
 
   const expression = expressionInput.value.trim();
   if (!expression) {
-    setFeedback("请输入要计算的表达式", "error");
+    setFeedback("Enter an expression", "error");
     expressionInput.focus();
     return;
   }
@@ -256,7 +256,7 @@ async function calculate(event) {
   const submitButton = calculatorForm.querySelector('[type="submit"]');
   calculatorForm.setAttribute("aria-busy", "true");
   submitButton.disabled = true;
-  setResult("计算中…", "loading");
+  setResult("Calculating…", "loading");
   setFeedback();
 
   try {
@@ -266,13 +266,13 @@ async function calculate(event) {
     });
 
     setResult(String(body.data.result), "success");
-    setFeedback("计算完成，记录已保存", "success");
+    setFeedback("Calculation complete and saved", "success");
     historyState.page = 1;
     await loadHistory();
   } catch (error) {
-    setResult("计算失败", "error");
+    setResult("Calculation failed", "error");
     setFeedback(
-      error instanceof ApiError ? error.message : "计算失败，请稍后重试",
+      error instanceof ApiError ? error.message : "Calculation failed. Try again.",
       "error",
     );
   } finally {
@@ -333,7 +333,7 @@ async function handleBaseConversion(event) {
   const value = baseValueInput.value.trim();
   const submitButton = baseConversionForm.querySelector('[type="submit"]');
   submitButton.disabled = true;
-  setOutput(baseResultElement, "转换中…", "loading");
+  setOutput(baseResultElement, "Converting…", "loading");
   setElementFeedback(baseFeedbackElement);
 
   try {
@@ -346,14 +346,14 @@ async function handleBaseConversion(event) {
       }),
     });
     setOutput(baseResultElement, String(body.data.result), "success");
-    setElementFeedback(baseFeedbackElement, "转换完成，记录已保存", "success");
+    setElementFeedback(baseFeedbackElement, "Conversion complete and saved", "success");
     historyState.page = 1;
     await loadHistory();
   } catch (error) {
-    setOutput(baseResultElement, "转换失败", "error");
+    setOutput(baseResultElement, "Conversion failed", "error");
     setElementFeedback(
       baseFeedbackElement,
-      error instanceof ApiError ? error.message : "转换失败，请稍后重试",
+      error instanceof ApiError ? error.message : "Conversion failed. Try again.",
       "error",
     );
   } finally {

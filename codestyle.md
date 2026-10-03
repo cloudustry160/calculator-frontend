@@ -10,7 +10,7 @@ the [MDN Accessibility Guidelines](https://developer.mozilla.org/en-US/docs/Web/
 ## HTML
 
 - Use the HTML5 document type.
-- Keep the document language set to `zh-CN` while the user interface is Chinese.
+- Keep the document language set to `en`.
 - Use lowercase tag and attribute names.
 - Use double quotes for attribute values.
 - Use semantic elements and maintain a logical heading order.
